@@ -1,11 +1,11 @@
 use stage_service::stage_service_client::StageServiceClient;
-use stage_service::{GenerateProofRequest, BlockFileItem};
+use stage_service::{BlockFileItem, GenerateProofRequest};
 
-use std::fs;  
-use std::path::Path;
 use std::env;
+use std::fs;
+use std::path::Path;
 
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 pub mod stage_service {
     tonic::include_proto!("stage.v1");
@@ -24,13 +24,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut block_data = Vec::new();
 
     let block_dir_path = Path::new(&block_path);
-    let dir_entries = fs::read_dir(block_dir_path).unwrap();    
-    for entry in dir_entries {  
-        let entry = entry.unwrap();  
+    let dir_entries = fs::read_dir(block_dir_path).unwrap();
+    for entry in dir_entries {
+        let entry = entry.unwrap();
         let path = entry.path();
-        let file_name = path.file_name().unwrap().to_str().unwrap(); 
+        let file_name = path.file_name().unwrap().to_str().unwrap();
         let file_path = format!("{}/{}", block_path, file_name);
-        let block_file_item = BlockFileItem{
+        let block_file_item = BlockFileItem {
             file_name: file_name.to_string(),
             file_content: prover::provers::read_file_bin(&file_path).unwrap(),
         };
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let response = stage_client.generate_proof(request).await?.into_inner();
     println!("response: {:?}", response);
     let end = Instant::now();
-    let elapsed = end.duration_since(start);  
+    let elapsed = end.duration_since(start);
     println!("Elapsed time: {:?} secs", elapsed.as_secs());
     Ok(())
 }

@@ -11,7 +11,6 @@ pub struct GenerateContext {
     pub final_path: String,
     pub block_no: u64,
     pub seg_size: u32,
-    
 }
 
 impl GenerateContext {
@@ -26,7 +25,6 @@ impl GenerateContext {
         block_no: u64,
         seg_size: u32,
     ) -> Self {
-        
         GenerateContext {
             proof_id: proof_id.to_string(),
             basedir: basedir.to_string(),
