@@ -4,6 +4,7 @@ members = [
   "stage",
   "service",
   "executor",
+  "common",
   ]
 
 resolver = "2"
