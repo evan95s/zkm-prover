@@ -66,6 +66,7 @@ impl ProverService for ProverServiceSVC {
         request: Request<SplitElfRequest>,
     ) -> tonic::Result<Response<SplitElfResponse>, Status> {
         log::info!("{:#?}", request);
+        println!("split elf: {:#?}", request);
         let start = Instant::now();
 
         let split_context = SplitContext::new(
@@ -75,11 +76,13 @@ impl ProverService for ProverServiceSVC {
             request.get_ref().seg_size,
             &request.get_ref().seg_path,
         );
+        println!("call split func");
         let split_func = move || {
             let s_ctx: SplitContext = split_context;
             executor::executor::Executor::new().split(&s_ctx)
         };
         let success = run_back_task(split_func).await;
+        println!("success is {}", success);
         let mut response = prover_service::SplitElfResponse {
             proof_id: request.get_ref().proof_id.clone(),
             computed_request_id: request.get_ref().computed_request_id.clone(),

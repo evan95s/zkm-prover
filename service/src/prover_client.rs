@@ -112,6 +112,7 @@ pub async fn split(mut split_task: SplitTask, tls_config: Option<TlsConfig>) -> 
             seg_size: split_task.seg_size,
         };
         log::info!("split request {:#?}", request);
+        println!("split request {:#?}", request);
         let mut grpc_request = Request::new(request);
         grpc_request.set_timeout(Duration::from_secs(300));
         let response = client.split_elf(grpc_request).await;

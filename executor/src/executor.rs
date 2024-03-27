@@ -24,12 +24,13 @@ impl Executor {
         let seg_path = ctx.seg_path.clone();
         let seg_size = ctx.seg_size.to_usize().expect("u32->usize failed");
         let args = "".to_string();
-
+        println!("elf path is {}", elf_path);
         let data = fs::read(elf_path);
         if let core::result::Result::Ok(data) = data {
             let file_result = ElfBytes::<AnyEndian>::minimal_parse(data.as_slice());
             match file_result {
                 core::result::Result::Ok(file) => {
+                    println!("file_result is ok");
                     let (mut state, _) = State::load_elf(&file);
                     state.patch_go(&file);
                     state.patch_stack(&args);
@@ -54,7 +55,9 @@ impl Executor {
                     instrumented_state.split_segment(true, &seg_path);
                     return true;
                 }
-                Err(_e) => {}
+                Err(_e) => {
+                    println!("file_result is error: {:?}", _e);
+                }
             }
         }
         false
