@@ -34,13 +34,15 @@ impl Executor {
                     let (mut state, _) = State::load_elf(&file);
                     state.patch_go(&file);
                     state.patch_stack(&args);
-
+                    
                     let block_path = get_block_path(&basedir, &block_no, "");
+                    println!("block path is {}", block_path);
                     state.load_input(&block_path);
 
                     let mut instrumented_state = InstrumentedState::new(state, block_path);
                     instrumented_state.split_segment(false, &seg_path);
                     let mut segment_step: usize = seg_size;
+                    println!("segment_step is {}", segment_step);
                     loop {
                         if instrumented_state.state.exited {
                             break;
@@ -53,6 +55,7 @@ impl Executor {
                         }
                     }
                     instrumented_state.split_segment(true, &seg_path);
+                    println!("split return true");
                     return true;
                 }
                 Err(_e) => {
