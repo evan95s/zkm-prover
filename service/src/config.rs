@@ -17,6 +17,7 @@ pub struct RuntimeConfig {
     pub prover_addrs: Vec<String>,
     pub snark_addrs: Vec<String>,
     pub base_dir: String,
+    pub service_kind: String,
     pub ca_cert_path: Option<String>,
     pub cert_path: Option<String>,
     pub key_path: Option<String>,
@@ -29,6 +30,7 @@ impl RuntimeConfig {
             prover_addrs: ["0.0.0.0:50000".to_string()].to_vec(),
             snark_addrs: ["0.0.0.0:50000".to_string()].to_vec(),
             base_dir: "/tmp".to_string(),
+            service_kind: "stage".to_string(),
             ca_cert_path: None,
             cert_path: None,
             key_path: None,
@@ -56,6 +58,13 @@ impl RuntimeConfig {
                 return None;
             }
         };
+        if config.service_kind != "stage" && config.service_kind != "prover" {
+            error!(
+                "unsupport service kind {}, only support stage and prover now",
+                config.service_kind
+            );
+            return None;
+        }
         // both of ca_cert_path, cert_path, key_path should be some or none
         if config.ca_cert_path.is_some() || config.cert_path.is_some() || config.key_path.is_some()
         {
@@ -83,6 +92,11 @@ impl RuntimeConfig {
             .unwrap()
             .snark_addrs
             .clone_from(&config.snark_addrs);
+        instance()
+            .lock()
+            .unwrap()
+            .service_kind
+            .clone_from(&config.service_kind);
         instance()
             .lock()
             .unwrap()

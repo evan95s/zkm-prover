@@ -37,29 +37,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             nodes_data.add_snark_node(ProverNode::new(node));
         }
     }
-    let prover = prover_service::ProverServiceSVC::default();
-    let stage = stage_service::StageServiceSVC::new(runtime_config.clone()).await?;
-    if runtime_config.ca_cert_path.is_some() {
-        let tls_config = TlsConfig::new(
-            runtime_config.ca_cert_path.unwrap(),
-            runtime_config.cert_path.unwrap(),
-            runtime_config.key_path.unwrap(),
-        )
-        .await?;
-        Server::builder()
-            .tls_config(
-                ServerTlsConfig::new()
-                    .identity(tls_config.identity)
-                    .client_ca_root(tls_config.ca_cert),
-            )?
-            .add_service(ProverServiceServer::new(prover))
-            .add_service(StageServiceServer::new(stage))
-            .serve(addr)
+    if runtime_config.service_kind == "stage" {
+        let stage = stage_service::StageServiceSVC::new(runtime_config.clone()).await?;
+        if runtime_config.ca_cert_path.is_some() {
+            let tls_config = TlsConfig::new(
+                runtime_config.ca_cert_path.unwrap(),
+                runtime_config.cert_path.unwrap(),
+                runtime_config.key_path.unwrap(),
+            )
             .await?;
+            Server::builder()
+                .tls_config(
+                    ServerTlsConfig::new()
+                        .identity(tls_config.identity)
+                        .client_ca_root(tls_config.ca_cert),
+                )?
+                .add_service(StageServiceServer::new(stage))
+                .serve(addr)
+                .await?;
+        } else {
+            Server::builder()
+                .add_service(StageServiceServer::new(stage))
+                .serve(addr)
+                .await?;
+        }
     } else {
+        let prover = prover_service::ProverServiceSVC::default();
         Server::builder()
             .add_service(ProverServiceServer::new(prover))
-            .add_service(StageServiceServer::new(stage))
             .serve(addr)
             .await?;
     }
