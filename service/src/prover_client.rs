@@ -6,6 +6,7 @@ use prover_service::GetTaskResultRequest;
 use prover_service::ProveRequest;
 use prover_service::SplitElfRequest;
 use prover_service::{get_status_response, GetStatusRequest};
+use std::sync::Arc;
 use tonic::transport::ClientTlsConfig;
 
 use stage::tasks::{
@@ -31,7 +32,7 @@ pub fn get_nodes() -> Vec<ProverNode> {
 }
 
 pub async fn get_idle_client(
-    tls_config: Option<TlsConfig>,
+    tls_config: Arc<Option<TlsConfig>>,
 ) -> Option<ProverServiceClient<Channel>> {
     let nodes: Vec<ProverNode> = get_nodes();
     for node in nodes {
@@ -51,7 +52,7 @@ pub fn get_snark_nodes() -> Vec<ProverNode> {
 }
 
 pub async fn get_snark_client(
-    tls_config: Option<TlsConfig>,
+    tls_config: Arc<Option<TlsConfig>>,
 ) -> Option<ProverServiceClient<Channel>> {
     let nodes: Vec<ProverNode> = get_snark_nodes();
     for node in nodes {
@@ -66,17 +67,17 @@ pub async fn get_snark_client(
 
 pub async fn is_active(
     addr: &String,
-    tls_config: Option<TlsConfig>,
+    tls_config: Arc<Option<TlsConfig>>,
 ) -> Option<ProverServiceClient<Channel>> {
     let uri = format!("grpc://{}", addr).parse::<Uri>().unwrap();
     let mut endpoint = tonic::transport::Channel::builder(uri)
         .connect_timeout(Duration::from_secs(5))
         .timeout(Duration::from_secs(TASK_TIMEOUT))
         .concurrency_limit(256);
-    if let Some(config) = tls_config {
+    if let Some(config) = tls_config.as_ref() {
         let tls_config = ClientTlsConfig::new()
-            .ca_certificate(config.ca_cert)
-            .identity(config.identity);
+            .ca_certificate(config.ca_cert.clone())
+            .identity(config.identity.clone());
         endpoint = endpoint.tls_config(tls_config).unwrap();
     }
     let client = ProverServiceClient::connect(endpoint).await;
@@ -108,7 +109,10 @@ pub fn result_code_to_state(code: i32) -> u32 {
     }
 }
 
-pub async fn split(mut split_task: SplitTask, tls_config: Option<TlsConfig>) -> Option<SplitTask> {
+pub async fn split(
+    mut split_task: SplitTask,
+    tls_config: Arc<Option<TlsConfig>>,
+) -> Option<SplitTask> {
     split_task.state = TASK_STATE_UNPROCESSED;
     let client = get_idle_client(tls_config).await;
     if let Some(mut client) = client {
@@ -139,7 +143,10 @@ pub async fn split(mut split_task: SplitTask, tls_config: Option<TlsConfig>) -> 
     Some(split_task)
 }
 
-pub async fn prove(mut prove_task: ProveTask, tls_config: Option<TlsConfig>) -> Option<ProveTask> {
+pub async fn prove(
+    mut prove_task: ProveTask,
+    tls_config: Arc<Option<TlsConfig>>,
+) -> Option<ProveTask> {
     prove_task.state = TASK_STATE_UNPROCESSED;
     let client = get_idle_client(tls_config).await;
     if let Some(mut client) = client {
@@ -173,7 +180,7 @@ pub async fn prove(mut prove_task: ProveTask, tls_config: Option<TlsConfig>) -> 
 
 pub async fn aggregate_all(
     mut agg_all_task: AggAllTask,
-    tls_config: Option<TlsConfig>,
+    tls_config: Arc<Option<TlsConfig>>,
 ) -> Option<AggAllTask> {
     agg_all_task.state = TASK_STATE_UNPROCESSED;
     let client = get_idle_client(tls_config).await;
@@ -210,9 +217,9 @@ pub async fn aggregate_all(
 
 pub async fn final_proof(
     mut final_task: FinalTask,
-    _tls_config: Option<TlsConfig>,
+    _tls_config: &Option<TlsConfig>,
 ) -> Option<FinalTask> {
-    let client = get_snark_client(None).await;
+    let client = get_snark_client(Arc::new(None)).await;
     if let Some(mut client) = client {
         let request = FinalProofRequest {
             chain_id: 0,

@@ -8,6 +8,7 @@ use stage::tasks::Task;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio::time;
 use tonic::{Request, Response, Status};
@@ -144,11 +145,12 @@ impl StageService for StageServiceSVC {
         let mut stage = stage::stage::Stage::new(generate_context);
         let (tx, mut rx) = mpsc::channel(128);
         stage.dispatch();
+        let tls_config = Arc::new(self.tls_config.clone());
         loop {
             let split_task = stage.get_split_task();
             if let Some(split_task) = split_task {
                 let tx = tx.clone();
-                let tls_config = self.tls_config.clone();
+                let tls_config = tls_config.clone();
                 tokio::spawn(async move {
                     let response = prover_client::split(split_task, tls_config).await;
                     if let Some(split_task) = response {
@@ -159,7 +161,7 @@ impl StageService for StageServiceSVC {
             let prove_task = stage.get_prove_task();
             if let Some(prove_task) = prove_task {
                 let tx = tx.clone();
-                let tls_config = self.tls_config.clone();
+                let tls_config = tls_config.clone();
                 tokio::spawn(async move {
                     let response = prover_client::prove(prove_task, tls_config).await;
                     if let Some(prove_task) = response {
@@ -170,7 +172,7 @@ impl StageService for StageServiceSVC {
             let agg_task = stage.get_agg_all_task();
             if let Some(agg_task) = agg_task {
                 let tx = tx.clone();
-                let tls_config = self.tls_config.clone();
+                let tls_config = tls_config.clone();
                 tokio::spawn(async move {
                     let response = prover_client::aggregate_all(agg_task, tls_config).await;
                     if let Some(agg_task) = response {
@@ -183,7 +185,7 @@ impl StageService for StageServiceSVC {
                 let tx = tx.clone();
                 let tls_config = self.tls_config.clone();
                 tokio::spawn(async move {
-                    let response = prover_client::final_proof(final_task, tls_config).await;
+                    let response = prover_client::final_proof(final_task, &tls_config).await;
                     if let Some(final_task) = response {
                         tx.send(Task::Final(final_task)).await.unwrap();
                     }
