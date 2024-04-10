@@ -112,6 +112,7 @@ pub fn result_code_to_state(code: i32) -> u32 {
 }
 
 pub async fn split(mut split_task: SplitTask, tls_config: Option<TlsConfig>) -> Option<SplitTask> {
+    println!("split task {:#?} begin", split_task);
     split_task.state = TASK_STATE_UNPROCESSED;
     let client = get_idle_client(tls_config).await;
     if let Some(mut client) = client {
@@ -127,22 +128,26 @@ pub async fn split(mut split_task: SplitTask, tls_config: Option<TlsConfig>) -> 
             seg_size: split_task.seg_size,
         };
         log::info!("split request {:#?}", request);
+        println!("split request {:#?}", request);
         let mut grpc_request = Request::new(request);
         grpc_request.set_timeout(Duration::from_secs(300));
         let response = client.split_elf(grpc_request).await;
         if let Ok(response) = response {
             if let Some(response_result) = response.get_ref().result.as_ref() {
                 log::info!("split response {:#?}", response);
+                println!("split response {:#?}", response);
                 split_task.state = result_code_to_state(response_result.code);
                 return Some(split_task);
             }
         }
     }
     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    println!("split task {:#?} done", split_task);
     Some(split_task)
 }
 
 pub async fn prove(mut prove_task: ProveTask, tls_config: Option<TlsConfig>) -> Option<ProveTask> {
+    println!("prove begin here");
     prove_task.state = TASK_STATE_UNPROCESSED;
     let client = get_idle_client(tls_config).await;
     if let Some(mut client) = client {
@@ -159,12 +164,14 @@ pub async fn prove(mut prove_task: ProveTask, tls_config: Option<TlsConfig>) -> 
             pub_value_path: prove_task.pub_value_path.clone(),
         };
         log::info!("prove request {:#?}", request);
+        println!("prove request {:#?}", request);
         let mut grpc_request = Request::new(request);
         grpc_request.set_timeout(Duration::from_secs(3000));
         let response = client.prove(grpc_request).await;
         if let Ok(response) = response {
             if let Some(response_result) = response.get_ref().result.as_ref() {
                 log::info!("prove response {:#?}", response);
+                println!("prove response {:#?}", response);
                 prove_task.state = result_code_to_state(response_result.code);
                 return Some(prove_task);
             }
@@ -247,12 +254,14 @@ pub async fn final_proof(
             verifier_only_circuit_data,
         };
         log::info!("final_proof request {:#?}", request);
+        println!("final_proof request {:#?}", request);
         let mut grpc_request = Request::new(request);
         grpc_request.set_timeout(Duration::from_secs(3000));
         let response = client.final_proof(grpc_request).await;
         if let Ok(response) = response {
             if let Some(response_result) = response.get_ref().result.as_ref() {
                 log::info!("final_proof response {:#?}", response);
+                println!("final_proof response {:#?}", response);
                 if ResultCode::from_i32(response_result.code) == Some(ResultCode::Ok) {
                     let mut loop_count = 0;
                     loop {

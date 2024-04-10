@@ -149,6 +149,7 @@ impl StageService for StageServiceSVC {
                 let tx = tx.clone();
                 let tls_config = self.tls_config.clone();
                 tokio::spawn(async move {
+                    println!("send split task");
                     let response = prover_client::split(split_task, tls_config).await;
                     if let Some(split_task) = response {
                         tx.send(Task::Split(split_task)).await.unwrap();
@@ -159,6 +160,7 @@ impl StageService for StageServiceSVC {
             if let Some(prove_task) = prove_task {
                 let tx = tx.clone();
                 let tls_config = self.tls_config.clone();
+                println!("send prove task");
                 tokio::spawn(async move {
                     let response = prover_client::prove(prove_task, tls_config).await;
                     if let Some(prove_task) = response {
@@ -170,6 +172,7 @@ impl StageService for StageServiceSVC {
             if let Some(agg_task) = agg_task {
                 let tx = tx.clone();
                 let tls_config = self.tls_config.clone();
+                println!("send aggregate task");
                 tokio::spawn(async move {
                     let response = prover_client::aggregate_all(agg_task, tls_config).await;
                     if let Some(agg_task) = response {
@@ -181,6 +184,7 @@ impl StageService for StageServiceSVC {
             if let Some(final_task) = final_task {
                 let tx = tx.clone();
                 let tls_config = self.tls_config.clone();
+                println!("send final task");
                 tokio::spawn(async move {
                     let response = prover_client::final_proof(final_task, tls_config).await;
                     if let Some(final_task) = response {
