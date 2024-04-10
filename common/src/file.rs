@@ -32,6 +32,7 @@ impl Write for Writer {
         let mut file = File::create(&self.path)?;
         file.write_all(buf)?;
         file.flush()?;
+        println!("write file size is {}", buf.len());
         std::result::Result::Ok(buf.len())
     }
 
