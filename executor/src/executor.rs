@@ -48,6 +48,7 @@ impl Executor {
                     let mut instrumented_state = InstrumentedState::new(state, block_path);
                     let seg_path_clone = seg_path.clone();
                     create_dir_all(&seg_path_clone).unwrap();
+                    println!("create dir {}", seg_path_clone);
                     let new_write = |_: &str| -> Option<std::fs::File> { None };
                     instrumented_state.split_segment(false, &seg_path_clone, new_write);
                     let mut segment_step: usize = seg_size;

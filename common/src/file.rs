@@ -22,6 +22,7 @@ impl Writer {
 
 impl Write for Writer {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        println!("write file {}", self.path);
         if is_s3_path(&self.path) {
             write_file(&self.path, buf)
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("{}", e)))?;
