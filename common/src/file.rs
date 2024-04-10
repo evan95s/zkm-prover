@@ -14,6 +14,7 @@ pub struct Writer {
 
 impl Writer {
     pub fn new(path: &str) -> Self {
+        println!("new writer path {}", path);
         Writer {
             path: path.to_string(),
         }
@@ -29,11 +30,8 @@ impl Write for Writer {
             return std::result::Result::Ok(buf.len());
         }
         let mut file = File::create(&self.path)?;
-        println!("create file {}", &self.path);
         file.write_all(buf)?;
-        println!("write all file {}", &self.path);
         file.flush()?;
-        println!("flush file {}", &self.path);
         std::result::Result::Ok(buf.len())
     }
 
